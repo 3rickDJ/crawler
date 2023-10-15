@@ -4,9 +4,12 @@
 # https://docs.scrapy.org/en/latest/topics/items.html
 
 import scrapy
+# import BeautifulSoup
 
 
 class RobotoItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    url = scrapy.Field()
+    content = scrapy.Field()
+    depth = scrapy.Field()

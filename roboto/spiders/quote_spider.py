@@ -1,30 +1,32 @@
 from pathlib import Path
 import scrapy
+from scrapy.loader import ItemLoader
+from roboto.items import RobotoItem
+from scrapy.exceptions import CloseSpider
 
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
-    start_urls = ["file:///home/erick/tmp/sitio-web/index.html"]
+    start_urls = ["https://quotes.toscrape.com/"]
     custom_settings = {
             'DEPTH_LIMIT': 3
             }
 
-
-    # def start_requests(self):
-    #     urls = [
-    #         "https://quotes.toscrape.com/page/1/",
-    #         "https://quotes.toscrape.com/page/2/"
-    #     ]
-    #     for url in urls:
-    #         yield scrapy.Request(url=url, callback=self.parse)
-
     def parse(self, response, depth=1):
         if depth > self.settings.getint("DEPTH_LIMIT"):
             self.log(f"🔥Reached max depth {depth} for {response.url}")
-            return
+            # close spider
+            raise CloseSpider("🔥Reached max depth")
+
         if response.headers.get("Content-Type", b"").startswith(b"text/html"):
-            # depth_limit = self.settings.getint("DEPTH_LIMIT")
+            l = ItemLoader(item=RobotoItem(), response=response)
+            l.add_value("url", response.url)
+            l.add_value("content", response.text)
+            l.add_value("depth", depth)
             self.log(f"Got successful response from {response.url} 📀  {depth}")
+            item = l.load_item()
+            yield item
+            # depth_limit = self.settings.getint("DEPTH_LIMIT")
 
 
 
