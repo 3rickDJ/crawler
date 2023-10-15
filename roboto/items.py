@@ -11,7 +11,7 @@ import re
 
 def extract_text(html):
     soup = BeautifulSoup(html, "html.parser").get_text().strip()
-    return re.split(r"[^a-zA-Z0-9]+", soup)
+    return set(re.split(r"[^a-zA-Z0-9]+", soup))
 
 
 class RobotoItem(scrapy.Item):
