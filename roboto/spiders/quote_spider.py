@@ -7,9 +7,9 @@ from scrapy.exceptions import CloseSpider
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
-    start_urls = ["https://quotes.toscrape.com/"]
+    start_urls = ["http://127.0.0.1:8080/index.html"]
     custom_settings = {
-            'DEPTH_LIMIT': 3
+            'DEPTH_LIMIT': 2
             }
 
     def parse(self, response, depth=1):
@@ -39,17 +39,18 @@ class QuotesSpider(scrapy.Spider):
         hrefs = response.xpath("//a/@href").extract()
         for href in hrefs:
             url = response.urljoin(href)
-            if depth >= 2:
+            if depth >= self.settings.getint("DEPTH_LIMIT"):
                 yield scrapy.Request(url=url, callback=self.parse_last)
             else:
                 yield scrapy.Request(url=url, callback=self.parse, cb_kwargs=dict(depth=depth+1))
 
     def parse_last(self, response):
         if response.headers.get("Content-Type", b"").startswith(b"text/html"):
+            max_depth = self.settings.getint("DEPTH_LIMIT")
             l = ItemLoader(item=RobotoItem(), response=response)
             l.add_value("url", response.url)
             l.add_value("content", response.text)
-            l.add_value("depth", 3)
-            self.log(f"Got successful response from {response.url} 📀  {3}")
+            l.add_value("depth", max_depth)
+            self.log(f"Got successful response from {response.url} 📀  {max_depth}")
             item = l.load_item()
             yield item
