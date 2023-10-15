@@ -13,10 +13,10 @@ class QuotesSpider(scrapy.Spider):
             }
 
     def parse(self, response, depth=1):
-        if depth > self.settings.getint("DEPTH_LIMIT"):
-            self.log(f"🔥Reached max depth {depth} for {response.url}")
-            # close spider
-            raise CloseSpider("🔥Reached max depth")
+        # if depth > self.settings.getint("DEPTH_LIMIT"):
+        #     self.log(f"🔥Reached max depth {depth} for {response.url}")
+        #     # close spider
+        #     raise CloseSpider("🔥Reached max depth")
 
         if response.headers.get("Content-Type", b"").startswith(b"text/html"):
             l = ItemLoader(item=RobotoItem(), response=response)
@@ -34,9 +34,22 @@ class QuotesSpider(scrapy.Spider):
         # import pudb; pudb.set_trace()
         page = response.url.split("/")[-2]
         filename = f"quotes-{page}.html 🍉  {depth}"
-        # Path(filename).write_bytes(response.body)
+        # Path(filename).write_bytes(response.body)H
         self.log(f"Saved file {filename}")
         hrefs = response.xpath("//a/@href").extract()
         for href in hrefs:
             url = response.urljoin(href)
-            yield scrapy.Request(url=url, callback=self.parse, cb_kwargs=dict(depth=depth+1))
+            if depth >= 2:
+                yield scrapy.Request(url=url, callback=self.parse_last)
+            else:
+                yield scrapy.Request(url=url, callback=self.parse, cb_kwargs=dict(depth=depth+1))
+
+    def parse_last(self, response):
+        if response.headers.get("Content-Type", b"").startswith(b"text/html"):
+            l = ItemLoader(item=RobotoItem(), response=response)
+            l.add_value("url", response.url)
+            l.add_value("content", response.text)
+            l.add_value("depth", 3)
+            self.log(f"Got successful response from {response.url} 📀  {3}")
+            item = l.load_item()
+            yield item
