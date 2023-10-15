@@ -7,24 +7,20 @@ from scrapy.exceptions import CloseSpider
 
 class QuotesSpider(scrapy.Spider):
     name = "quotes"
-    start_urls = ["http://127.0.0.1:8080/index.html"]
+    start_urls = ["http://localhost:8080/"]
     custom_settings = {
-            'DEPTH_LIMIT': 2
+            'DEPTH_LIMIT': 3
             }
 
     def parse(self, response, depth=1):
-        # if depth > self.settings.getint("DEPTH_LIMIT"):
-        #     self.log(f"🔥Reached max depth {depth} for {response.url}")
-        #     # close spider
-        #     raise CloseSpider("🔥Reached max depth")
-
+        # if is a html page save it
         if response.headers.get("Content-Type", b"").startswith(b"text/html"):
             l = ItemLoader(item=RobotoItem(), response=response)
             l.add_value("url", response.url)
             l.add_value("content", response.text)
             l.add_value("depth", depth)
-            self.log(f"Got successful response from {response.url} 📀  {depth}")
             item = l.load_item()
+            self.log(f"Got successful response from {response.url} 📀  {depth}")
             yield item
             # depth_limit = self.settings.getint("DEPTH_LIMIT")
 
